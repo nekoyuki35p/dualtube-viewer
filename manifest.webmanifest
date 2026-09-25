@@ -2,7 +2,7 @@
   "id": "./",
   "name": "DualTube Viewer",
   "short_name": "DualTube",
-  "description": "YouTubeを2画面で同時視聴するためのビューア",
+  "description": "YouTubeを2画面で同時視聴するためのデュアルビューア",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
