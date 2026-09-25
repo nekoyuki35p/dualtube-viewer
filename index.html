@@ -136,7 +136,7 @@
     </div>
   </div>
 
-  <div class="note">Ver.0.3.1: YouTube検索・共有受信に加えて、縦↔横のワンタップ切替を追加。音量・URL・上下入替・視聴モードは端末に保存されます。</div>
+  <div class="note">Ver.0.3.2: YouTube共有の受取経路を専用ページ方式に修正。検索・縦↔横・音量・上下入替・視聴モードは維持しています。</div>
 </main>
 
 <div id="shareOverlay" class="share-overlay" role="dialog" aria-modal="true" aria-labelledby="shareHeading">
@@ -276,17 +276,25 @@ function closeShareDialog(){
 function clearShareQuery(){
   if(!history.replaceState)return;
   const clean=new URL(location.href);
-  ["share_target","shared_title","shared_text","shared_url"].forEach(k=>clean.searchParams.delete(k));
+  ["share_target","incoming_share","shared_title","shared_text","shared_url"].forEach(k=>clean.searchParams.delete(k));
   history.replaceState({},document.title,clean.pathname+(clean.search?"?"+clean.searchParams.toString():"")+clean.hash);
 }
 
 function handleIncomingShare(){
   const params=new URLSearchParams(location.search);
-  if(params.get("share_target")!=="1")return;
+  if(params.get("incoming_share")!=="1")return;
 
-  const title=params.get("shared_title")||"";
-  const text=params.get("shared_text")||"";
-  const url=params.get("shared_url")||"";
+  let payload=null;
+  try{
+    const raw=localStorage.getItem("dualtube_pending_share");
+    if(raw)payload=JSON.parse(raw);
+  }catch{}
+
+  localStorage.removeItem("dualtube_pending_share");
+
+  const title=payload?.title||"";
+  const text=payload?.text||"";
+  const url=payload?.url||"";
   const found=findYoutubeUrl(url,text,title);
 
   if(found){

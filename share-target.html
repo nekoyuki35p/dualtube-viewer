@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <title>DualTube - 共有受信</title>
+  <style>
+    html,body{margin:0;min-height:100%;background:#0f0f0f;color:#f5f5f5;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{display:grid;place-items:center;padding:24px}
+    .card{max-width:460px;width:100%;background:#181818;border:1px solid #333;border-radius:18px;padding:20px;text-align:center}
+    .pink{color:#ff4f8b;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="pink">DualTube Viewer</div>
+    <p>共有されたYouTubeリンクを受け取っています…</p>
+  </div>
+
+<script>
+function extractVideoId(value){
+  if(!value)return null;
+  const raw=String(value).trim();
+  if(/^[A-Za-z0-9_-]{11}$/.test(raw))return raw;
+
+  let url;
+  try{url=new URL(raw)}catch{return null}
+  const host=url.hostname.replace(/^www\./,"");
+
+  if(host==="youtu.be"){
+    const id=url.pathname.split("/").filter(Boolean)[0];
+    return /^[A-Za-z0-9_-]{11}$/.test(id||"")?id:null;
+  }
+
+  if(host.endsWith("youtube.com")||host.endsWith("youtube-nocookie.com")){
+    const v=url.searchParams.get("v");
+    if(v&&/^[A-Za-z0-9_-]{11}$/.test(v))return v;
+
+    const parts=url.pathname.split("/").filter(Boolean);
+    if(parts.length>=2&&["live","shorts","embed"].includes(parts[0])){
+      const id=parts[1];
+      return /^[A-Za-z0-9_-]{11}$/.test(id||"")?id:null;
+    }
+  }
+  return null;
+}
+
+function findYoutubeUrl(...values){
+  for(const value of values){
+    if(!value)continue;
+    const text=String(value);
+
+    // YouTube app often shares the URL inside the text field.
+    const candidates=text.match(/https?:\/\/[^\s<>"']+/g)||[];
+    for(let candidate of candidates){
+      candidate=candidate.replace(/[)\]}>、。！？!?]+$/g,"");
+      if(extractVideoId(candidate))return candidate;
+    }
+
+    const trimmed=text.trim();
+    if(extractVideoId(trimmed))return trimmed;
+  }
+  return null;
+}
+
+const params=new URLSearchParams(location.search);
+const title=params.get("shared_title")||"";
+const text=params.get("shared_text")||"";
+const url=params.get("shared_url")||"";
+const found=findYoutubeUrl(url,text,title);
+
+try{
+  localStorage.setItem("dualtube_pending_share", JSON.stringify({
+    title,
+    text,
+    url: found || url,
+    receivedAt: Date.now()
+  }));
+}catch{}
+
+location.replace("./?incoming_share=1");
+</script>
+</body>
+</html>

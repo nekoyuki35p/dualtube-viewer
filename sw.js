@@ -1,5 +1,5 @@
-const CACHE_NAME="dualtube-viewer-v0.3.1";
-const APP_SHELL=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
+const CACHE_NAME="dualtube-viewer-v0.3.2";
+const APP_SHELL=["./","./index.html","./share-target.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)));

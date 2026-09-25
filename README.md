@@ -1,32 +1,37 @@
-# DualTube Viewer Web v0.3.1
+# DualTube Viewer Web v0.3.2
 
-## v0.3.1 追加
-- 「↻ 横画面 / ↻ 縦画面」ボタン
-- 押すたびに portrait / landscape を切替
-- 現在の画面方向に合わせてボタン表示も自動変更
-- 横画面時は既存CSSによりプレイヤーを左右表示
-- 端末/ブラウザが強制回転を拒否した場合は案内を表示
+## 修正内容
+YouTubeの「共有 → DualTube」を選んでもURLが本体へ反映されない問題を修正。
 
-## v0.3から維持
-- YouTube検索導線
-- YouTube共有 → DualTube
-- 共有URLを「上 / 下」に投入
-- 上下独立音量
-- 上だけ / 下だけ / 両方
-- 視聴モード
-- 上下入替
-- URL/音量/表示状態の保存
-- PWA対応
+以前:
+share_target → index.html のクエリを直接読む
 
-## 更新方法
-GitHub Pagesのリポジトリで以下を上書き:
+v0.3.2:
+share_target → share-target.html
+→ 共有データをlocalStorageへ一時保存
+→ DualTube本体へリダイレクト
+→ 「上に入れる / 下に入れる」を表示
+
+この方式の方が、Androidで既に起動しているPWAへ共有した場合にも扱いやすくなります。
+
+## GitHub Pagesへアップロードするファイル
 - index.html
+- share-target.html  ← 新規
+- manifest.webmanifest
 - sw.js
-
-manifest.webmanifest とアイコンはv0.3から変更していません。
-全部まとめて上書きしても問題ありません。
+- icon-192.png
+- icon-512.png
 
 ## 重要
-Screen Orientation APIはAndroid/ブラウザ/PWAの状態によって制限されます。
-ボタンで強制回転できない場合でも、端末の自動回転をONにして物理的に回転すれば、
-DualTubeはCSSで自動的に上下表示↔左右表示へ切り替わります。
+share_target の action が変わったため、
+GitHub Pages更新後はDualTubeを一度アンインストール/削除し、
+Chromeからもう一度PWAとしてインストールしてください。
+
+## テスト手順
+1. YouTubeアプリで動画を開く
+2. 共有
+3. DualTubeを選択
+4. DualTubeが開く
+5. 「上に入れる / 下に入れる」が表示される
+6. どちらかをタップ
+7. 選んだプレイヤーにURLが入る

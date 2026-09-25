@@ -23,7 +23,7 @@
     }
   ],
   "share_target": {
-    "action": "./?share_target=1",
+    "action": "./share-target.html",
     "method": "GET",
     "params": {
       "title": "shared_title",
