@@ -1,4 +1,4 @@
-const CACHE_NAME="dualtube-viewer-v0.3.2";
+const CACHE_NAME="dualtube-viewer-v0.4.2";
 const APP_SHELL=["./","./index.html","./share-target.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install",event=>{

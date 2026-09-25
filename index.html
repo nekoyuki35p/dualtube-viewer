@@ -54,6 +54,33 @@
     .audio-btn.active{background:var(--accent);color:#fff}
     .note{margin:10px 4px 18px;color:var(--muted);font-size:12px;line-height:1.55}
 
+    .library-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+    .library-btn{display:flex;align-items:center;justify-content:center;gap:6px}
+    .count-badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#3a3a3a;color:#ddd;font-size:11px}
+    .slot-fav-btn{flex:0 0 44px;padding:10px 0;font-size:20px;line-height:1}
+    .slot-fav-btn.active{background:#493742;color:#ffd34d}
+
+    .library-overlay{display:none;position:fixed;inset:0;z-index:110;background:var(--overlay);padding:12px;align-items:flex-end;justify-content:center}
+    .library-overlay.show{display:flex}
+    .library-sheet{width:min(720px,100%);max-height:88vh;background:#151515;border:1px solid #353535;border-radius:20px 20px 14px 14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.48)}
+    .library-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 10px;border-bottom:1px solid #2c2c2c}
+    .library-head h2{font-size:19px;margin:0}
+    .library-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px}
+    .library-tab.active{background:var(--accent)}
+    .library-tools{display:flex;gap:8px;padding:0 12px 10px}
+    .library-tools input{flex:1}
+    .library-list{overflow:auto;padding:0 12px 14px;display:flex;flex-direction:column;gap:9px}
+    .library-empty{padding:28px 12px;text-align:center;color:var(--muted);line-height:1.6}
+    .video-item{display:grid;grid-template-columns:112px 1fr;gap:10px;padding:9px;background:#1d1d1d;border:1px solid #303030;border-radius:14px}
+    .video-thumb{width:112px;aspect-ratio:16/9;object-fit:cover;border-radius:9px;background:#000}
+    .video-main{min-width:0;display:flex;flex-direction:column;gap:6px}
+    .video-title{font-size:14px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .video-meta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .video-actions{display:grid;grid-template-columns:1fr 1fr auto auto;gap:6px;margin-top:auto}
+    .video-actions button{padding:8px 7px;font-size:12px}
+    .fav-toggle.active{color:#ffd34d}
+    .danger-btn{color:#ff9c9c}
+
     .share-overlay{display:none;position:fixed;inset:0;z-index:100;background:var(--overlay);padding:18px;align-items:center;justify-content:center}
     .share-overlay.show{display:flex}
     .share-card{width:min(520px,100%);background:#181818;border:1px solid #383838;border-radius:18px;padding:18px;box-shadow:0 18px 55px rgba(0,0,0,.45)}
@@ -64,7 +91,7 @@
     .share-actions .cancel{grid-column:1/-1}
     .share-actions button{padding:13px 12px}
 
-    body.watch-mode .input-row,body.watch-mode .status,body.watch-mode .note,body.watch-mode .search-help{display:none}
+    body.watch-mode .input-row,body.watch-mode .status,body.watch-mode .note,body.watch-mode .search-panel{display:none}
     body.watch-mode .search-panel{margin-bottom:4px}
     body.watch-mode h1{font-size:16px;opacity:.85}
     body.watch-mode .topbar{margin-bottom:4px}
@@ -76,6 +103,10 @@
     @media (max-width:520px){
       h1{font-size:18px}.toolbar button{font-size:12px;padding:8px 9px}
       .search-panel{grid-template-columns:1fr auto}
+      .video-item{grid-template-columns:96px 1fr}
+      .video-thumb{width:96px}
+      .video-actions{grid-template-columns:1fr 1fr auto}
+      .video-actions .delete-item{grid-column:1/-1}
     }
   </style>
 </head>
@@ -98,10 +129,16 @@
     <div class="search-help">検索結果はYouTubeで開きます。見つけた動画で「共有 → DualTube」を選ぶと、この画面へ直接戻せます。</div>
   </section>
 
+  <div class="library-bar">
+    <button id="historyBtn" class="library-btn">🕘 履歴 <span id="historyCount" class="count-badge">0</span></button>
+    <button id="favoritesBtn" class="library-btn">★ お気に入り <span id="favoritesCount" class="count-badge">0</span></button>
+  </div>
+
   <div id="players" class="players">
     <section id="sectionA">
       <div class="input-row">
         <input id="urlA" type="url" inputmode="url" placeholder="上のYouTube URL" autocomplete="off">
+        <button id="favA" class="slot-fav-btn" title="お気に入り">☆</button>
         <button class="load-btn" id="loadA">読込</button>
       </div>
       <div class="player-wrap"><div id="playerA"></div></div>
@@ -110,6 +147,7 @@
     <section id="sectionB">
       <div class="input-row">
         <input id="urlB" type="url" inputmode="url" placeholder="下のYouTube URL" autocomplete="off">
+        <button id="favB" class="slot-fav-btn" title="お気に入り">☆</button>
         <button class="load-btn" id="loadB">読込</button>
       </div>
       <div class="player-wrap"><div id="playerB"></div></div>
@@ -136,8 +174,26 @@
     </div>
   </div>
 
-  <div class="note">Ver.0.3.2: YouTube共有の受取経路を専用ページ方式に修正。検索・縦↔横・音量・上下入替・視聴モードは維持しています。</div>
+  <div class="note">Ver.0.4.1: 視聴モード時に検索欄も非表示。履歴・お気に入り・共有・縦横切替などはそのまま使えます。</div>
 </main>
+
+<div id="libraryOverlay" class="library-overlay" role="dialog" aria-modal="true" aria-labelledby="libraryHeading">
+  <div class="library-sheet">
+    <div class="library-head">
+      <h2 id="libraryHeading">🕘 履歴</h2>
+      <button id="libraryClose" class="small-btn">閉じる</button>
+    </div>
+    <div class="library-tabs">
+      <button id="historyTab" class="library-tab active">🕘 履歴</button>
+      <button id="favoritesTab" class="library-tab">★ お気に入り</button>
+    </div>
+    <div class="library-tools">
+      <input id="libraryFilter" type="search" placeholder="保存した動画を検索">
+      <button id="clearHistoryBtn" class="danger-btn">履歴を消去</button>
+    </div>
+    <div id="libraryList" class="library-list"></div>
+  </div>
+</div>
 
 <div id="shareOverlay" class="share-overlay" role="dialog" aria-modal="true" aria-labelledby="shareHeading">
   <div class="share-card">
@@ -154,7 +210,11 @@
 
 <script>
 let apiReady=false, playerA=null, playerB=null, swapped=false, audioMode="both", deferredInstallPrompt=null;
-let pendingSharedUrl=null;
+let pendingSharedUrl=null, pendingSharedTitle="";
+let libraryMode="history";
+const HISTORY_KEY="dualtube_history_v1";
+const FAVORITES_KEY="dualtube_favorites_v1";
+const HISTORY_LIMIT=50;
 
 const $=id=>document.getElementById(id);
 const els={
@@ -164,7 +224,14 @@ const els={
   watchModeBtn:$("watchModeBtn"),installBtn:$("installBtn"),
   youtubeSearch:$("youtubeSearch"),shareOverlay:$("shareOverlay"),
   sharedTitle:$("sharedTitle"),sharedUrl:$("sharedUrl"),
-  orientationBtn:$("orientationBtn")
+  orientationBtn:$("orientationBtn"),
+  historyBtn:$("historyBtn"),favoritesBtn:$("favoritesBtn"),
+  historyCount:$("historyCount"),favoritesCount:$("favoritesCount"),
+  libraryOverlay:$("libraryOverlay"),libraryHeading:$("libraryHeading"),
+  libraryList:$("libraryList"),libraryFilter:$("libraryFilter"),
+  historyTab:$("historyTab"),favoritesTab:$("favoritesTab"),
+  clearHistoryBtn:$("clearHistoryBtn"),
+  favA:$("favA"),favB:$("favB")
 };
 
 function setStatus(msg,err=false){els.status.textContent=msg;els.status.classList.toggle("error",err)}
@@ -206,12 +273,245 @@ function findYoutubeUrl(...values){
   return null;
 }
 
-function makePlayer(id){
+
+function canonicalYoutubeUrl(value){
+  const id=extractVideoId(value);
+  return id ? "https://www.youtube.com/watch?v="+id : null;
+}
+
+function fallbackTitle(url){
+  const id=extractVideoId(url);
+  return id ? "YouTube動画 ("+id+")" : "YouTube動画";
+}
+
+function loadJsonArray(key){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(key)||"[]");
+    return Array.isArray(parsed)?parsed:[];
+  }catch{return []}
+}
+
+function saveJsonArray(key,items){
+  localStorage.setItem(key,JSON.stringify(items));
+}
+
+function sourceLabel(item){
+  if(item.source==="search") return item.searchQuery ? "🔎 "+item.searchQuery : "🔎 検索から";
+  if(item.source==="share") return "共有から";
+  if(item.source==="favorite") return "お気に入りから";
+  if(item.source==="history") return "履歴から";
+  return "URL読込";
+}
+
+function formatSavedTime(ts){
+  if(!ts)return "";
+  try{
+    return new Intl.DateTimeFormat("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(ts));
+  }catch{return ""}
+}
+
+function recordHistory(url,title="",source="direct",extra={}){
+  const canonical=canonicalYoutubeUrl(url);
+  const id=extractVideoId(url);
+  if(!canonical||!id)return;
+
+  let items=loadJsonArray(HISTORY_KEY);
+  const old=items.find(x=>x.id===id);
+  items=items.filter(x=>x.id!==id);
+
+  const now=Date.now();
+  items.unshift({
+    id,
+    url:canonical,
+    title:(title&&title.trim()) || old?.title || fallbackTitle(canonical),
+    source,
+    searchQuery:extra.searchQuery || old?.searchQuery || "",
+    addedAt:old?.addedAt || now,
+    lastUsedAt:now
+  });
+
+  saveJsonArray(HISTORY_KEY,items.slice(0,HISTORY_LIMIT));
+  updateLibraryCounts();
+  if(els.libraryOverlay.classList.contains("show") && libraryMode==="history") renderLibrary();
+}
+
+function updateSavedTitle(videoId,title){
+  if(!videoId||!title||!title.trim())return;
+  for(const key of [HISTORY_KEY,FAVORITES_KEY]){
+    const items=loadJsonArray(key);
+    let changed=false;
+    for(const item of items){
+      if(item.id===videoId && item.title!==title){
+        item.title=title.trim();
+        changed=true;
+      }
+    }
+    if(changed)saveJsonArray(key,items);
+  }
+  updateSlotFavoriteButtons();
+  if(els.libraryOverlay.classList.contains("show"))renderLibrary();
+}
+
+function isFavoriteUrl(url){
+  const id=extractVideoId(url);
+  return !!id && loadJsonArray(FAVORITES_KEY).some(x=>x.id===id);
+}
+
+function toggleFavorite(url,title="",source="direct"){
+  const canonical=canonicalYoutubeUrl(url);
+  const id=extractVideoId(url);
+  if(!canonical||!id){
+    setStatus("お気に入りにするYouTube動画がありません。",true);
+    return;
+  }
+
+  let favorites=loadJsonArray(FAVORITES_KEY);
+  const exists=favorites.some(x=>x.id===id);
+
+  if(exists){
+    favorites=favorites.filter(x=>x.id!==id);
+    setStatus("お気に入りから外しました。");
+  }else{
+    const hist=loadJsonArray(HISTORY_KEY).find(x=>x.id===id);
+    favorites.unshift({
+      id,
+      url:canonical,
+      title:(title&&title.trim()) || hist?.title || fallbackTitle(canonical),
+      source,
+      searchQuery:hist?.searchQuery || "",
+      addedAt:Date.now(),
+      lastUsedAt:Date.now()
+    });
+    setStatus("★ お気に入りに追加しました。");
+  }
+
+  saveJsonArray(FAVORITES_KEY,favorites);
+  updateLibraryCounts();
+  updateSlotFavoriteButtons();
+  if(els.libraryOverlay.classList.contains("show"))renderLibrary();
+}
+
+function updateSlotFavoriteButtons(){
+  const pairs=[[els.favA,els.urlA],[els.favB,els.urlB]];
+  for(const [button,input] of pairs){
+    const active=isFavoriteUrl(input.value);
+    button.textContent=active?"★":"☆";
+    button.classList.toggle("active",active);
+  }
+}
+
+function updateLibraryCounts(){
+  els.historyCount.textContent=String(loadJsonArray(HISTORY_KEY).length);
+  els.favoritesCount.textContent=String(loadJsonArray(FAVORITES_KEY).length);
+}
+
+function getItemById(id){
+  return loadJsonArray(HISTORY_KEY).find(x=>x.id===id) ||
+         loadJsonArray(FAVORITES_KEY).find(x=>x.id===id) || null;
+}
+
+function openLibrary(mode="history"){
+  libraryMode=mode;
+  els.libraryOverlay.classList.add("show");
+  renderLibrary();
+}
+
+function closeLibrary(){
+  els.libraryOverlay.classList.remove("show");
+}
+
+function renderLibrary(){
+  const favorites=libraryMode==="favorites";
+  els.libraryHeading.textContent=favorites?"★ お気に入り":"🕘 履歴";
+  els.historyTab.classList.toggle("active",!favorites);
+  els.favoritesTab.classList.toggle("active",favorites);
+  els.clearHistoryBtn.style.display=favorites?"none":"inline-block";
+
+  const keyword=els.libraryFilter.value.trim().toLowerCase();
+  let items=loadJsonArray(favorites?FAVORITES_KEY:HISTORY_KEY);
+  if(keyword){
+    items=items.filter(item=>
+      (item.title||"").toLowerCase().includes(keyword) ||
+      (item.url||"").toLowerCase().includes(keyword) ||
+      (item.searchQuery||"").toLowerCase().includes(keyword)
+    );
+  }
+
+  if(!items.length){
+    els.libraryList.innerHTML='<div class="library-empty">'+
+      (favorites?"お気に入りはまだありません。<br>☆ボタンや履歴から追加できます。":"履歴はまだありません。<br>共有またはURL読込すると自動で残ります。")+
+      '</div>';
+    return;
+  }
+
+  els.libraryList.innerHTML=items.map(item=>{
+    const fav=isFavoriteUrl(item.url);
+    const thumb="https://i.ytimg.com/vi/"+encodeURIComponent(item.id)+"/hqdefault.jpg";
+    const meta=[formatSavedTime(item.lastUsedAt||item.addedAt),sourceLabel(item)].filter(Boolean).join(" ・ ");
+    return `
+      <article class="video-item" data-video-id="${item.id}">
+        <img class="video-thumb" src="${thumb}" alt="" loading="lazy">
+        <div class="video-main">
+          <div class="video-title">${escapeHtml(item.title||fallbackTitle(item.url))}</div>
+          <div class="video-meta">${escapeHtml(meta)}</div>
+          <div class="video-actions">
+            <button data-action="load-top">⬆ 上へ</button>
+            <button data-action="load-bottom">⬇ 下へ</button>
+            <button class="fav-toggle ${fav?"active":""}" data-action="favorite">${fav?"★":"☆"}</button>
+            <button class="delete-item danger-btn" data-action="delete">${favorites?"解除":"削除"}</button>
+          </div>
+        </div>
+      </article>`;
+  }).join("");
+}
+
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function loadSavedItem(item,position){
+  if(!item)return;
+  const visualTop=position==="top";
+  const input=visualTop?getTopInput():getBottomInput();
+  const key=visualTop?getTopKey():getBottomKey();
+  input.value=item.url;
+  localStorage.setItem("dualtube_url_"+key,item.url);
+  closeLibrary();
+
+  const source=libraryMode==="favorites"?"favorite":"history";
+  if(apiReady){
+    loadVideo(key,{title:item.title,source});
+  }else{
+    recordHistory(item.url,item.title,source);
+    setStatus((visualTop?"上":"下")+"に動画をセットしました。プレイヤー準備後に「読込」を押してください。");
+  }
+  updateSlotFavoriteButtons();
+}
+
+function currentPlayerTitle(which){
+  const player=which==="A"?playerA:playerB;
+  try{
+    const data=player?.getVideoData?.();
+    return data?.title||"";
+  }catch{return ""}
+}
+
+function syncPlayerMetadata(player,which){
+  try{
+    const data=player?.getVideoData?.();
+    const title=data?.title||"";
+    const id=data?.video_id||extractVideoId((which==="A"?els.urlA:els.urlB).value);
+    if(id&&title)updateSavedTitle(id,title);
+  }catch{}
+}
+
+function makePlayer(id,which){
   return new YT.Player(id,{
     width:"100%",height:"100%",videoId:"",
     playerVars:{autoplay:0,controls:1,playsinline:1,rel:0,fs:1},
     events:{
       onReady:e=>{e.target.mute();applyAudioMode()},
+      onStateChange:e=>syncPlayerMetadata(e.target,which),
       onError:e=>setStatus("YouTubeプレイヤーでエラーが発生しました。コード: "+e.data,true)
     }
   });
@@ -224,7 +524,7 @@ function getBottomInput(){return swapped?els.urlA:els.urlB}
 function getTopKey(){return swapped?"B":"A"}
 function getBottomKey(){return swapped?"A":"B"}
 
-function loadVideo(which){
+function loadVideo(which,meta={}){
   if(!apiReady){setStatus("YouTubeプレイヤーを準備中です。",true);return}
   const input=which==="A"?els.urlA:els.urlB;
   const player=which==="A"?playerA:playerB;
@@ -233,9 +533,25 @@ function loadVideo(which){
   if(!id){setStatus("YouTubeのURLを確認してください。",true);return}
 
   try{
+    const canonical=canonicalYoutubeUrl(input.value);
+    input.value=canonical||input.value.trim();
     player.cueVideoById(id);
     player.mute();
     localStorage.setItem("dualtube_url_"+which,input.value.trim());
+
+    const pendingSearch=(()=>{
+      try{return JSON.parse(localStorage.getItem("dualtube_search_pending")||"null")}catch{return null}
+    })();
+    let source=meta.source||"direct";
+    let searchQuery=meta.searchQuery||"";
+    if(source==="share" && pendingSearch && Date.now()-Number(pendingSearch.at||0)<30*60*1000){
+      source="search";
+      searchQuery=pendingSearch.q||"";
+      localStorage.removeItem("dualtube_search_pending");
+    }
+
+    recordHistory(input.value,meta.title||"",source,{searchQuery});
+    updateSlotFavoriteButtons();
     applyAudioMode();
     setStatus("動画を読み込みました。▶ を押して再生してください。");
   }catch{
@@ -248,20 +564,24 @@ function putSharedVideo(position){
   const visualTop=position==="top";
   const input=visualTop?getTopInput():getBottomInput();
   const key=visualTop?getTopKey():getBottomKey();
+  const sharedUrl=pendingSharedUrl;
+  const sharedTitle=pendingSharedTitle;
 
-  input.value=pendingSharedUrl;
-  localStorage.setItem("dualtube_url_"+key,pendingSharedUrl);
+  input.value=sharedUrl;
+  localStorage.setItem("dualtube_url_"+key,sharedUrl);
   closeShareDialog();
 
   if(apiReady){
-    loadVideo(key);
+    loadVideo(key,{title:sharedTitle,source:"share"});
   }else{
+    recordHistory(sharedUrl,sharedTitle,"share");
     setStatus((visualTop?"上":"下")+"に共有URLをセットしました。プレイヤー準備後に「読込」を押してください。");
   }
 }
 
 function showShareDialog(url,title){
   pendingSharedUrl=url;
+  pendingSharedTitle=title||"";
   els.sharedTitle.textContent=title||"YouTubeから共有された動画";
   els.sharedUrl.textContent=url;
   els.shareOverlay.classList.add("show");
@@ -270,6 +590,7 @@ function showShareDialog(url,title){
 function closeShareDialog(){
   els.shareOverlay.classList.remove("show");
   pendingSharedUrl=null;
+  pendingSharedTitle="";
   clearShareQuery();
 }
 
@@ -309,6 +630,7 @@ function searchYoutube(){
   const q=els.youtubeSearch.value.trim();
   if(!q){setStatus("検索ワードを入力してください。",true);els.youtubeSearch.focus();return}
   localStorage.setItem("dualtube_last_search",q);
+  localStorage.setItem("dualtube_search_pending",JSON.stringify({q,at:Date.now()}));
   const url="https://www.youtube.com/results?search_query="+encodeURIComponent(q);
   const a=document.createElement("a");
   a.href=url;a.target="_blank";a.rel="noopener noreferrer";
@@ -432,14 +754,14 @@ function restore(){
     els.watchModeBtn.textContent="✎ 編集モード";
   }
 
-  updatePlaceholders();updateVolLabels();updateOrientationButton();
+  updatePlaceholders();updateVolLabels();updateOrientationButton();updateLibraryCounts();updateSlotFavoriteButtons();
   document.querySelectorAll(".audio-btn").forEach(x=>x.classList.toggle("active",x.dataset.mode===audioMode));
 }
 
 window.onYouTubeIframeAPIReady=()=>{
   apiReady=true;
-  playerA=makePlayer("playerA");
-  playerB=makePlayer("playerB");
+  playerA=makePlayer("playerA","A");
+  playerB=makePlayer("playerB","B");
   setStatus("準備完了。検索またはURL入力から動画を選んでください。");
 };
 
@@ -450,6 +772,51 @@ els.urlB.addEventListener("keydown",e=>{if(e.key==="Enter")loadVideo("B")});
 
 $("youtubeSearchBtn").addEventListener("click",searchYoutube);
 els.youtubeSearch.addEventListener("keydown",e=>{if(e.key==="Enter")searchYoutube()});
+
+els.historyBtn.addEventListener("click",()=>openLibrary("history"));
+els.favoritesBtn.addEventListener("click",()=>openLibrary("favorites"));
+$("libraryClose").addEventListener("click",closeLibrary);
+els.libraryOverlay.addEventListener("click",e=>{if(e.target===els.libraryOverlay)closeLibrary()});
+els.historyTab.addEventListener("click",()=>{libraryMode="history";renderLibrary()});
+els.favoritesTab.addEventListener("click",()=>{libraryMode="favorites";renderLibrary()});
+els.libraryFilter.addEventListener("input",renderLibrary);
+els.clearHistoryBtn.addEventListener("click",()=>{
+  if(confirm("履歴をすべて消去しますか？")){
+    saveJsonArray(HISTORY_KEY,[]);
+    updateLibraryCounts();
+    renderLibrary();
+    setStatus("履歴を消去しました。");
+  }
+});
+
+els.libraryList.addEventListener("click",e=>{
+  const button=e.target.closest("button[data-action]");
+  if(!button)return;
+  const card=button.closest(".video-item");
+  const id=card?.dataset.videoId;
+  const item=getItemById(id);
+  if(!item)return;
+
+  const action=button.dataset.action;
+  if(action==="load-top")loadSavedItem(item,"top");
+  else if(action==="load-bottom")loadSavedItem(item,"bottom");
+  else if(action==="favorite")toggleFavorite(item.url,item.title,item.source);
+  else if(action==="delete"){
+    if(libraryMode==="favorites"){
+      saveJsonArray(FAVORITES_KEY,loadJsonArray(FAVORITES_KEY).filter(x=>x.id!==id));
+      setStatus("お気に入りから外しました。");
+    }else{
+      saveJsonArray(HISTORY_KEY,loadJsonArray(HISTORY_KEY).filter(x=>x.id!==id));
+      setStatus("履歴から削除しました。");
+    }
+    updateLibraryCounts();updateSlotFavoriteButtons();renderLibrary();
+  }
+});
+
+els.favA.addEventListener("click",()=>toggleFavorite(els.urlA.value,currentPlayerTitle("A"),"direct"));
+els.favB.addEventListener("click",()=>toggleFavorite(els.urlB.value,currentPlayerTitle("B"),"direct"));
+els.urlA.addEventListener("input",updateSlotFavoriteButtons);
+els.urlB.addEventListener("input",updateSlotFavoriteButtons);
 
 document.querySelectorAll(".audio-btn").forEach(btn=>btn.addEventListener("click",()=>{
   audioMode=btn.dataset.mode;saveVolumes();applyAudioMode();
