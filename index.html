@@ -265,7 +265,7 @@
     </div>
   </div>
 
-  <div class="note">Ver.0.5.0：比率切替、メイン交換、個別全画面、画面消灯防止、縦横UI自動切替、共有の空き枠自動投入、サイレント更新。</div>
+  <div class="note">Ver.0.5.1：v0.5.0の操作ボタン初期化不具合を修正。比率切替、全画面、画面消灯防止、縦横UI自動切替を維持。</div>
 </main>
 
 <div id="settingsOverlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
@@ -295,7 +295,7 @@
 
     <div class="settings-section">
       <div class="settings-title">アプリ情報</div>
-      <div id="versionText" class="version-text">DualTube Viewer v0.5.0</div>
+      <div id="versionText" class="version-text">DualTube Viewer v0.5.1</div>
       <div class="settings-help">更新は起動時に自動確認し、視聴中に強制リロードしません。</div>
     </div>
   </div>
@@ -333,7 +333,7 @@
 </div>
 
 <script>
-const APP_VERSION="0.5.0";
+const APP_VERSION="0.5.1";
 const HISTORY_KEY="dualtube_history_v1";
 const FAVORITES_KEY="dualtube_favorites_v1";
 const HISTORY_LIMIT=50;
@@ -370,7 +370,7 @@ const els={
   volumePrimaryLabel:$("volumePrimaryLabel"),volumeSecondaryLabel:$("volumeSecondaryLabel"),
   audioPrimaryBtn:$("audioPrimaryBtn"),audioSecondaryBtn:$("audioSecondaryBtn"),
   watchModeBtn:$("watchModeBtn"),watchAudioBtn:$("watchAudioBtn"),
-  orientationBtn:$("orientationBtn"),installBtn:$("installBtn"),settingsBtn:$("settingsBtn"),
+  swapBtn:$("swapBtn"),orientationBtn:$("orientationBtn"),installBtn:$("installBtn"),settingsBtn:$("settingsBtn"),
   youtubeSearch:$("youtubeSearch"),
   historyBtn:$("historyBtn"),favoritesBtn:$("favoritesBtn"),
   historyCount:$("historyCount"),favoritesCount:$("favoritesCount"),
