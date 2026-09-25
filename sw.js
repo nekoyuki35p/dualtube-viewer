@@ -1,4 +1,4 @@
-const CACHE_NAME="dualtube-viewer-v0.4.2";
+const CACHE_NAME="dualtube-viewer-v0.4.5";
 const APP_SHELL=["./","./index.html","./share-target.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install",event=>{
@@ -35,4 +35,11 @@ self.addEventListener("fetch",event=>{
       })
       .catch(()=>caches.match(event.request))
   );
+});
+
+
+self.addEventListener("message",event=>{
+  if(event.data && event.data.type==="SKIP_WAITING"){
+    self.skipWaiting();
+  }
 });

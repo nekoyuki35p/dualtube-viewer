@@ -1,37 +1,47 @@
-# DualTube Viewer Web v0.3.2
+# DualTube Viewer Web v0.4.5
 
-## 修正内容
-YouTubeの「共有 → DualTube」を選んでもURLが本体へ反映されない問題を修正。
+## 安定化アップデート
 
-以前:
-share_target → index.html のクエリを直接読む
+### 1. 更新検知
+- Service Workerの新版を検出
+- 画面上に「新版があります → 更新」を表示
+- 更新ボタンで新しいService Workerへ切替して再読込
 
-v0.3.2:
-share_target → share-target.html
-→ 共有データをlocalStorageへ一時保存
-→ DualTube本体へリダイレクト
-→ 「上に入れる / 下に入れる」を表示
+### 2. バックアップ / 復元
+- 設定画面を追加
+- 履歴、お気に入り、音量、URL、表示設定などをJSONへ書き出し
+- JSONから復元可能
 
-この方式の方が、Androidで既に起動しているPWAへ共有した場合にも扱いやすくなります。
+### 3. YouTube検索タブ整理
+- 検索用ウィンドウ名を固定
+- 検索のたびに新しいタブが増えにくい方式へ変更
 
-## GitHub Pagesへアップロードするファイル
+### 4. 検索由来判定
+- 「検索 → YouTube → 共有」の関連付けを30分から5分へ短縮
+- 別動画の共有を検索由来と誤判定しにくくした
+
+### 5. 縦横切替のコード整理
+- orientationの保存処理を削除
+- 起動時は端末の現在方向を尊重
+- 縦横切替ボタン自体は維持
+
+### 6. YouTubeエラー案内改善
+- エラー 2 / 5 / 100 / 101 / 150 / 153 を日本語化
+- 再試行可能なエラーでは「再試行」ボタンを表示
+
+### 7. 視聴モード改善
+- 検索欄、URL欄、説明、ステータスを隠す従来仕様を維持
+- 「🔉 音量を畳む / 🔊 音量を開く」を追加
+- 畳むと音量スライダーを隠し、上だけ / 下だけ / 両方だけ残す
+- 履歴・お気に入りは視聴モードでも利用可能
+
+## GitHub Pages更新
+ZIP内の以下を上書きしてください:
 - index.html
-- share-target.html  ← 新規
-- manifest.webmanifest
 - sw.js
+- share-target.html
+- manifest.webmanifest
 - icon-192.png
 - icon-512.png
 
-## 重要
-share_target の action が変わったため、
-GitHub Pages更新後はDualTubeを一度アンインストール/削除し、
-Chromeからもう一度PWAとしてインストールしてください。
-
-## テスト手順
-1. YouTubeアプリで動画を開く
-2. 共有
-3. DualTubeを選択
-4. DualTubeが開く
-5. 「上に入れる / 下に入れる」が表示される
-6. どちらかをタップ
-7. 選んだプレイヤーにURLが入る
+Manifestの共有設定は変更していないため、基本的にPWAの再インストールは不要です。

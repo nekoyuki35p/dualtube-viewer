@@ -10,6 +10,7 @@
   <link rel="icon" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <title>DualTube Viewer</title>
+  <meta name="application-name" content="DualTube Viewer">
 
   <style>
     :root{
@@ -81,6 +82,37 @@
     .fav-toggle.active{color:#ffd34d}
     .danger-btn{color:#ff9c9c}
 
+
+    .update-banner{display:none;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:10px 12px;border:1px solid #6a4250;border-radius:12px;background:#2c1d23;color:#ffd9e6;font-size:13px}
+    .update-banner.show{display:flex}
+    .update-banner button{background:var(--accent);padding:8px 11px}
+
+    .status-line{display:flex;align-items:center;gap:8px;min-height:20px}
+    .status-line .status{flex:1;margin:4px 2px 8px}
+    .retry-btn{display:none;margin-bottom:6px;background:#3a2a31;color:#ffd6e4;padding:8px 10px;font-size:12px}
+    .retry-btn.show{display:inline-block}
+
+    .settings-overlay{display:none;position:fixed;inset:0;z-index:120;background:var(--overlay);padding:16px;align-items:center;justify-content:center}
+    .settings-overlay.show{display:flex}
+    .settings-card{width:min(560px,100%);background:#171717;border:1px solid #363636;border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+    .settings-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+    .settings-head h2{font-size:19px;margin:0}
+    .settings-section{padding:12px 0;border-top:1px solid #2d2d2d}
+    .settings-section:first-of-type{border-top:0}
+    .settings-title{font-size:13px;font-weight:700;margin-bottom:8px;color:#ddd}
+    .settings-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .settings-help{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.5}
+    .version-text{font-size:13px;color:#ccc}
+
+    .watch-audio-toggle{display:none}
+    body.watch-mode .watch-audio-toggle{display:inline-block}
+    body.watch-mode .library-bar{margin-bottom:5px}
+    body.watch-mode .sound-panel{margin-top:5px}
+    body.watch-mode.audio-collapsed .sound-panel .volume-row{display:none}
+    body.watch-mode.audio-collapsed .sound-panel{padding:7px 8px}
+    body.watch-mode.audio-collapsed .audio-controls button{padding:8px 6px;font-size:12px}
+    body.watch-mode .install-btn{display:none!important}
+
     .share-overlay{display:none;position:fixed;inset:0;z-index:100;background:var(--overlay);padding:18px;align-items:center;justify-content:center}
     .share-overlay.show{display:flex}
     .share-card{width:min(520px,100%);background:#181818;border:1px solid #383838;border-radius:18px;padding:18px;box-shadow:0 18px 55px rgba(0,0,0,.45)}
@@ -92,7 +124,6 @@
     .share-actions button{padding:13px 12px}
 
     body.watch-mode .input-row,body.watch-mode .status,body.watch-mode .note,body.watch-mode .search-panel{display:none}
-    body.watch-mode .search-panel{margin-bottom:4px}
     body.watch-mode h1{font-size:16px;opacity:.85}
     body.watch-mode .topbar{margin-bottom:4px}
 
@@ -113,12 +144,18 @@
 
 <body>
 <main class="app">
+  <div id="updateBanner" class="update-banner">
+    <span>DualTubeの新しい版があります。</span>
+    <button id="applyUpdateBtn">更新</button>
+  </div>
   <div class="topbar">
     <h1>DualTube Viewer</h1>
     <div class="toolbar">
       <button id="watchModeBtn" class="small-btn">👁 視聴モード</button>
+      <button id="watchAudioBtn" class="small-btn watch-audio-toggle">🔊 音量</button>
       <button id="swapBtn" class="small-btn">⇅ 上下入替</button>
       <button id="orientationBtn" class="small-btn">↻ 横画面</button>
+      <button id="settingsBtn" class="small-btn">⚙ 設定</button>
       <button id="installBtn" class="small-btn install-btn">＋ ホームに追加</button>
     </div>
   </div>
@@ -154,7 +191,10 @@
     </section>
   </div>
 
-  <div id="status" class="status">URLを2本入れて「読込」。その後、それぞれの ▶ を押して再生してください。</div>
+  <div class="status-line">
+    <div id="status" class="status">URLを2本入れて「読込」。その後、それぞれの ▶ を押して再生してください。</div>
+    <button id="retryBtn" class="retry-btn">再試行</button>
+  </div>
 
   <div class="sound-panel">
     <div class="volume-row">
@@ -174,8 +214,32 @@
     </div>
   </div>
 
-  <div class="note">Ver.0.4.1: 視聴モード時に検索欄も非表示。履歴・お気に入り・共有・縦横切替などはそのまま使えます。</div>
+  <div class="note">Ver.0.4.5 安定化版：更新検知、バックアップ/復元、検索導線整理、エラー案内改善、視聴モードの音量折りたたみを追加。</div>
 </main>
+
+<div id="settingsOverlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
+  <div class="settings-card">
+    <div class="settings-head">
+      <h2 id="settingsHeading">⚙ 設定</h2>
+      <button id="settingsClose" class="small-btn">閉じる</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">データのバックアップ</div>
+      <div class="settings-actions">
+        <button id="backupBtn">⬇ バックアップ</button>
+        <button id="restoreBtn">⬆ 復元</button>
+      </div>
+      <input id="restoreFileInput" type="file" accept="application/json,.json" hidden>
+      <div class="settings-help">履歴・お気に入り・音量・URL・表示設定などをJSONファイルに保存できます。</div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">アプリ情報</div>
+      <div id="versionText" class="version-text">DualTube Viewer</div>
+    </div>
+  </div>
+</div>
 
 <div id="libraryOverlay" class="library-overlay" role="dialog" aria-modal="true" aria-labelledby="libraryHeading">
   <div class="library-sheet">
@@ -209,8 +273,11 @@
 </div>
 
 <script>
+const APP_VERSION="0.4.5";
 let apiReady=false, playerA=null, playerB=null, swapped=false, audioMode="both", deferredInstallPrompt=null;
 let pendingSharedUrl=null, pendingSharedTitle="";
+let retryTarget=null;
+let waitingServiceWorker=null;
 let libraryMode="history";
 const HISTORY_KEY="dualtube_history_v1";
 const FAVORITES_KEY="dualtube_favorites_v1";
@@ -231,10 +298,19 @@ const els={
   libraryList:$("libraryList"),libraryFilter:$("libraryFilter"),
   historyTab:$("historyTab"),favoritesTab:$("favoritesTab"),
   clearHistoryBtn:$("clearHistoryBtn"),
-  favA:$("favA"),favB:$("favB")
+  favA:$("favA"),favB:$("favB"),
+  retryBtn:$("retryBtn"),
+  settingsOverlay:$("settingsOverlay"),settingsBtn:$("settingsBtn"),
+  versionText:$("versionText"),updateBanner:$("updateBanner"),
+  watchAudioBtn:$("watchAudioBtn")
 };
 
-function setStatus(msg,err=false){els.status.textContent=msg;els.status.classList.toggle("error",err)}
+function setStatus(msg,err=false,retryWhich=null){
+  els.status.textContent=msg;
+  els.status.classList.toggle("error",err);
+  retryTarget=retryWhich;
+  els.retryBtn.classList.toggle("show",!!retryWhich);
+}
 
 function extractVideoId(value){
   if(!value)return null;
@@ -505,6 +581,23 @@ function syncPlayerMetadata(player,which){
   }catch{}
 }
 
+
+function friendlyPlayerError(code){
+  const map={
+    2:"動画URLまたは動画IDを確認してください。",
+    5:"この端末で一時的に再生できません。再試行してください。",
+    100:"動画が削除・非公開になっている可能性があります。",
+    101:"この動画は埋め込み再生が許可されていません。YouTubeアプリで視聴してください。",
+    150:"この動画は埋め込み再生が許可されていません。YouTubeアプリで視聴してください。",
+    153:"YouTube側で呼び出し元を確認できませんでした。GitHub Pages版から開き直してください。"
+  };
+  return map[code] || ("YouTubeの再生でエラーが発生しました。コード: "+code);
+}
+
+function handlePlayerError(code,which){
+  setStatus(friendlyPlayerError(code),true,which);
+}
+
 function makePlayer(id,which){
   return new YT.Player(id,{
     width:"100%",height:"100%",videoId:"",
@@ -512,7 +605,7 @@ function makePlayer(id,which){
     events:{
       onReady:e=>{e.target.mute();applyAudioMode()},
       onStateChange:e=>syncPlayerMetadata(e.target,which),
-      onError:e=>setStatus("YouTubeプレイヤーでエラーが発生しました。コード: "+e.data,true)
+      onError:e=>handlePlayerError(e.data,which)
     }
   });
 }
@@ -544,7 +637,7 @@ function loadVideo(which,meta={}){
     })();
     let source=meta.source||"direct";
     let searchQuery=meta.searchQuery||"";
-    if(source==="share" && pendingSearch && Date.now()-Number(pendingSearch.at||0)<30*60*1000){
+    if(source==="share" && pendingSearch && Date.now()-Number(pendingSearch.at||0)<5*60*1000){
       source="search";
       searchQuery=pendingSearch.q||"";
       localStorage.removeItem("dualtube_search_pending");
@@ -632,9 +725,10 @@ function searchYoutube(){
   localStorage.setItem("dualtube_last_search",q);
   localStorage.setItem("dualtube_search_pending",JSON.stringify({q,at:Date.now()}));
   const url="https://www.youtube.com/results?search_query="+encodeURIComponent(q);
-  const a=document.createElement("a");
-  a.href=url;a.target="_blank";a.rel="noopener noreferrer";
-  document.body.appendChild(a);a.click();a.remove();
+  const opened=window.open(url,"dualtube_youtube_search");
+  if(!opened){
+    location.href=url;
+  }
   setStatus("YouTubeで「"+q+"」を検索しました。動画を選んだら「共有 → DualTube」で戻れます。");
 }
 
@@ -681,10 +775,24 @@ function swapPlayers(){
   updatePlaceholders();applyAudioMode();setStatus("上下を入れ替えました。");
 }
 
+function updateWatchAudioButton(){
+  const collapsed=document.body.classList.contains("audio-collapsed");
+  els.watchAudioBtn.textContent=collapsed?"🔊 音量を開く":"🔉 音量を畳む";
+}
+
+function toggleWatchAudio(){
+  document.body.classList.toggle("audio-collapsed");
+  localStorage.setItem("dualtube_audio_collapsed",document.body.classList.contains("audio-collapsed")?"1":"0");
+  updateWatchAudioButton();
+}
+
 function toggleWatch(){
   const on=document.body.classList.toggle("watch-mode");
   els.watchModeBtn.textContent=on?"✎ 編集モード":"👁 視聴モード";
   localStorage.setItem("dualtube_watch_mode",on?"1":"0");
+  if(!on) document.body.classList.remove("audio-collapsed");
+  else if(localStorage.getItem("dualtube_audio_collapsed")==="1") document.body.classList.add("audio-collapsed");
+  updateWatchAudioButton();
 }
 
 function isLandscape(){
@@ -710,7 +818,6 @@ async function toggleOrientation(){
 
   try{
     await screen.orientation.lock(target);
-    localStorage.setItem("dualtube_orientation",target);
     updateOrientationButton();
     setStatus(targetLabel+"に切り替えました。");
     return;
@@ -722,11 +829,74 @@ async function toggleOrientation(){
       await document.documentElement.requestFullscreen();
     }
     await screen.orientation.lock(target);
-    localStorage.setItem("dualtube_orientation",target);
     updateOrientationButton();
     setStatus(targetLabel+"に切り替えました。");
   }catch(secondError){
     setStatus("端末側が画面方向の強制切替を許可しませんでした。自動回転をONにして端末を回すと、DualTubeは自動で上下↔左右表示に切り替わります。",true);
+  }
+}
+
+
+const BACKUP_PREFIXES=["dualtube_"];
+
+function openSettings(){
+  els.versionText.textContent="DualTube Viewer v"+APP_VERSION;
+  els.settingsOverlay.classList.add("show");
+}
+
+function closeSettings(){
+  els.settingsOverlay.classList.remove("show");
+}
+
+function createBackupData(){
+  const data={app:"DualTube Viewer",version:APP_VERSION,createdAt:new Date().toISOString(),storage:{}};
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(BACKUP_PREFIXES.some(prefix=>key.startsWith(prefix))){
+      data.storage[key]=localStorage.getItem(key);
+    }
+  }
+  return data;
+}
+
+function downloadBackup(){
+  const data=createBackupData();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const stamp=new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download="DualTube_backup_"+stamp+".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  setStatus("バックアップを書き出しました。");
+}
+
+async function restoreBackupFile(file){
+  if(!file)return;
+  try{
+    const raw=await file.text();
+    const data=JSON.parse(raw);
+    if(!data || data.app!=="DualTube Viewer" || typeof data.storage!=="object"){
+      throw new Error("invalid");
+    }
+
+    for(const key of Object.keys(localStorage)){
+      if(BACKUP_PREFIXES.some(prefix=>key.startsWith(prefix))){
+        localStorage.removeItem(key);
+      }
+    }
+    for(const [key,value] of Object.entries(data.storage)){
+      if(BACKUP_PREFIXES.some(prefix=>key.startsWith(prefix)) && typeof value==="string"){
+        localStorage.setItem(key,value);
+      }
+    }
+    setStatus("バックアップを復元しました。画面を再読み込みします。");
+    setTimeout(()=>location.reload(),400);
+  }catch{
+    setStatus("バックアップファイルを読み込めませんでした。",true);
   }
 }
 
@@ -752,7 +922,11 @@ function restore(){
   if(localStorage.getItem("dualtube_watch_mode")==="1"){
     document.body.classList.add("watch-mode");
     els.watchModeBtn.textContent="✎ 編集モード";
+    if(localStorage.getItem("dualtube_audio_collapsed")==="1"){
+      document.body.classList.add("audio-collapsed");
+    }
   }
+  updateWatchAudioButton();
 
   updatePlaceholders();updateVolLabels();updateOrientationButton();updateLibraryCounts();updateSlotFavoriteButtons();
   document.querySelectorAll(".audio-btn").forEach(x=>x.classList.toggle("active",x.dataset.mode===audioMode));
@@ -764,6 +938,21 @@ window.onYouTubeIframeAPIReady=()=>{
   playerB=makePlayer("playerB","B");
   setStatus("準備完了。検索またはURL入力から動画を選んでください。");
 };
+
+els.retryBtn.addEventListener("click",()=>{
+  if(retryTarget) loadVideo(retryTarget);
+});
+
+$("settingsBtn").addEventListener("click",openSettings);
+$("settingsClose").addEventListener("click",closeSettings);
+els.settingsOverlay.addEventListener("click",e=>{if(e.target===els.settingsOverlay)closeSettings()});
+$("backupBtn").addEventListener("click",downloadBackup);
+$("restoreBtn").addEventListener("click",()=>$("restoreFileInput").click());
+$("restoreFileInput").addEventListener("change",e=>{
+  restoreBackupFile(e.target.files?.[0]);
+  e.target.value="";
+});
+els.watchAudioBtn.addEventListener("click",toggleWatchAudio);
 
 $("loadA").addEventListener("click",()=>loadVideo("A"));
 $("loadB").addEventListener("click",()=>loadVideo("B"));
@@ -864,9 +1053,47 @@ document.addEventListener("visibilitychange",()=>{
   }
 });
 
-if("serviceWorker" in navigator&&location.protocol==="https:"){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+function showUpdateBanner(worker){
+  waitingServiceWorker=worker||null;
+  els.updateBanner.classList.add("show");
 }
+
+if("serviceWorker" in navigator&&location.protocol==="https:"){
+  let refreshing=false;
+
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(refreshing)return;
+    refreshing=true;
+    location.reload();
+  });
+
+  window.addEventListener("load",async()=>{
+    try{
+      const reg=await navigator.serviceWorker.register("./sw.js");
+      if(reg.waiting) showUpdateBanner(reg.waiting);
+
+      reg.addEventListener("updatefound",()=>{
+        const worker=reg.installing;
+        if(!worker)return;
+        worker.addEventListener("statechange",()=>{
+          if(worker.state==="installed" && navigator.serviceWorker.controller){
+            showUpdateBanner(worker);
+          }
+        });
+      });
+
+      setTimeout(()=>reg.update().catch(()=>{}),1200);
+    }catch{}
+  });
+}
+
+$("applyUpdateBtn").addEventListener("click",()=>{
+  if(waitingServiceWorker){
+    waitingServiceWorker.postMessage({type:"SKIP_WAITING"});
+  }else{
+    location.reload();
+  }
+});
 
 restore();
 handleIncomingShare();
