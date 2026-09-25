@@ -19,6 +19,7 @@
       --overlay:rgba(0,0,0,.72)
     }
     *{box-sizing:border-box}
+    [hidden]{display:none!important}
     html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100%}
     body{padding:max(env(safe-area-inset-top),6px) 10px max(env(safe-area-inset-bottom),8px)}
     .app{max-width:980px;margin:0 auto}
@@ -101,7 +102,8 @@
     body.watch-mode .status-line,
     body.watch-mode .note,
     body.watch-mode .search-panel,
-    body.watch-mode .library-bar{display:none}
+    body.watch-mode #libraryBar{display:none!important}
+    body.watch-mode #libraryBar{display:none!important}
     body.watch-mode .ratio-controls{display:none}
     body.watch-mode .layout-bar.ratio-equal{display:none}
     body.watch-mode .sound-panel{margin-top:5px}
@@ -201,7 +203,7 @@
     <div class="search-help">検索結果はYouTubeで開きます。見つけた動画で「共有 → DualTube」を選ぶと戻れます。</div>
   </section>
 
-  <div class="library-bar">
+  <div id="libraryBar" class="library-bar">
     <button id="historyBtn" class="library-btn">🕘 履歴 <span id="historyCount" class="count-badge">0</span></button>
     <button id="favoritesBtn" class="library-btn">★ お気に入り <span id="favoritesCount" class="count-badge">0</span></button>
   </div>
@@ -264,7 +266,7 @@
     </div>
   </div>
 
-  <div class="note">Ver.0.5.2：視聴モード時に履歴・お気に入りも非表示にし、動画視聴画面をさらに整理。</div>
+  <div class="note">Ver.0.5.3：視聴モードの履歴・お気に入り非表示をCSS＋JavaScriptの二重制御に変更し、更新確認も強化。</div>
 </main>
 
 <div id="settingsOverlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
@@ -294,7 +296,7 @@
 
     <div class="settings-section">
       <div class="settings-title">アプリ情報</div>
-      <div id="versionText" class="version-text">DualTube Viewer v0.5.2</div>
+      <div id="versionText" class="version-text">DualTube Viewer v0.5.3</div>
       <div class="settings-help">更新は起動時に自動確認し、視聴中に強制リロードしません。</div>
     </div>
   </div>
@@ -332,7 +334,7 @@
 </div>
 
 <script>
-const APP_VERSION="0.5.2";
+const APP_VERSION="0.5.3";
 const HISTORY_KEY="dualtube_history_v1";
 const FAVORITES_KEY="dualtube_favorites_v1";
 const HISTORY_LIMIT=50;
@@ -371,7 +373,7 @@ const els={
   watchModeBtn:$("watchModeBtn"),watchAudioBtn:$("watchAudioBtn"),
   swapBtn:$("swapBtn"),orientationBtn:$("orientationBtn"),installBtn:$("installBtn"),settingsBtn:$("settingsBtn"),
   youtubeSearch:$("youtubeSearch"),
-  historyBtn:$("historyBtn"),favoritesBtn:$("favoritesBtn"),
+  libraryBar:$("libraryBar"),historyBtn:$("historyBtn"),favoritesBtn:$("favoritesBtn"),
   historyCount:$("historyCount"),favoritesCount:$("favoritesCount"),
   libraryOverlay:$("libraryOverlay"),libraryHeading:$("libraryHeading"),
   libraryList:$("libraryList"),libraryFilter:$("libraryFilter"),
@@ -838,13 +840,21 @@ function toggleWatchAudio(){
   updateWatchAudioButton();
 }
 
-function toggleWatch(){
-  state.watchMode=!state.watchMode;
+function applyWatchModeUI(){
   document.body.classList.toggle("watch-mode",state.watchMode);
   document.body.classList.toggle("audio-collapsed",state.watchMode&&state.audioCollapsed);
   els.watchModeBtn.textContent=state.watchMode?"✎ 編集モード":"👁 視聴モード";
-  localStorage.setItem("dualtube_watch_mode",state.watchMode?"1":"0");
+
+  // CSSに加えてhidden属性でも制御し、キャッシュやレイアウト差による表示残りを防ぐ。
+  els.libraryBar.hidden=state.watchMode;
+
   updateWatchAudioButton();
+}
+
+function toggleWatch(){
+  state.watchMode=!state.watchMode;
+  localStorage.setItem("dualtube_watch_mode",state.watchMode?"1":"0");
+  applyWatchModeUI();
 }
 
 async function toggleOrientation(){
@@ -1104,9 +1114,7 @@ function restore(){
   const ratio=localStorage.getItem("dualtube_layout_ratio");
   state.layoutRatio=["50-50","70-30","30-70"].includes(ratio)?ratio:"50-50";
 
-  document.body.classList.toggle("watch-mode",state.watchMode);
-  document.body.classList.toggle("audio-collapsed",state.watchMode&&state.audioCollapsed);
-  els.watchModeBtn.textContent=state.watchMode?"✎ 編集モード":"👁 視聴モード";
+  applyWatchModeUI();
 
   updateVisualSlotClasses();
   applyLayoutRatio();
@@ -1262,7 +1270,7 @@ window.addEventListener("appinstalled",()=>{
 if("serviceWorker" in navigator&&location.protocol==="https:"){
   window.addEventListener("load",async()=>{
     try{
-      const reg=await navigator.serviceWorker.register("./sw.js");
+      const reg=await navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"});
       setTimeout(()=>reg.update().catch(()=>{}),1200);
     }catch{}
   });

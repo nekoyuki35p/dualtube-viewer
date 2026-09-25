@@ -1,4 +1,4 @@
-const CACHE_NAME="dualtube-viewer-v0.5.2";
+const CACHE_NAME="dualtube-viewer-v0.5.3";
 const APP_SHELL=["./","./index.html","./share-target.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 
 self.addEventListener("install",event=>{
@@ -24,7 +24,7 @@ self.addEventListener("fetch",event=>{
   // Keep share-target.html separate from index.html so the relay page never overwrites the app fallback.
   if(event.request.mode==="navigate"){
     const fallback=url.pathname.endsWith("/share-target.html")?"./share-target.html":"./index.html";
-    event.respondWith(fetch(event.request).catch(()=>caches.match(fallback)));
+    event.respondWith(fetch(event.request,{cache:"no-store"}).catch(()=>caches.match(fallback)));
     return;
   }
 
