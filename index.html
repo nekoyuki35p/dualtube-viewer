@@ -87,6 +87,7 @@
     <div class="toolbar">
       <button id="watchModeBtn" class="small-btn">👁 視聴モード</button>
       <button id="swapBtn" class="small-btn">⇅ 上下入替</button>
+      <button id="orientationBtn" class="small-btn">↻ 横画面</button>
       <button id="installBtn" class="small-btn install-btn">＋ ホームに追加</button>
     </div>
   </div>
@@ -135,7 +136,7 @@
     </div>
   </div>
 
-  <div class="note">Ver.0.3: YouTube検索導線とAndroid共有受信を追加。音量・URL・上下入替・視聴モードは端末に保存されます。</div>
+  <div class="note">Ver.0.3.1: YouTube検索・共有受信に加えて、縦↔横のワンタップ切替を追加。音量・URL・上下入替・視聴モードは端末に保存されます。</div>
 </main>
 
 <div id="shareOverlay" class="share-overlay" role="dialog" aria-modal="true" aria-labelledby="shareHeading">
@@ -162,7 +163,8 @@ const els={
   volumeTopValue:$("volumeTopValue"),volumeBottomValue:$("volumeBottomValue"),
   watchModeBtn:$("watchModeBtn"),installBtn:$("installBtn"),
   youtubeSearch:$("youtubeSearch"),shareOverlay:$("shareOverlay"),
-  sharedTitle:$("sharedTitle"),sharedUrl:$("sharedUrl")
+  sharedTitle:$("sharedTitle"),sharedUrl:$("sharedUrl"),
+  orientationBtn:$("orientationBtn")
 };
 
 function setStatus(msg,err=false){els.status.textContent=msg;els.status.classList.toggle("error",err)}
@@ -355,6 +357,49 @@ function toggleWatch(){
   localStorage.setItem("dualtube_watch_mode",on?"1":"0");
 }
 
+function isLandscape(){
+  if(screen.orientation && typeof screen.orientation.type==="string"){
+    return screen.orientation.type.startsWith("landscape");
+  }
+  return window.matchMedia("(orientation: landscape)").matches;
+}
+
+function updateOrientationButton(){
+  if(!els.orientationBtn)return;
+  els.orientationBtn.textContent=isLandscape()?"↻ 縦画面":"↻ 横画面";
+}
+
+async function toggleOrientation(){
+  const target=isLandscape()?"portrait-primary":"landscape-primary";
+  const targetLabel=target.startsWith("landscape")?"横画面":"縦画面";
+
+  if(!screen.orientation || typeof screen.orientation.lock!=="function"){
+    setStatus("このブラウザでは画面方向の固定に対応していません。端末の自動回転をONにして回転してください。",true);
+    return;
+  }
+
+  try{
+    await screen.orientation.lock(target);
+    localStorage.setItem("dualtube_orientation",target);
+    updateOrientationButton();
+    setStatus(targetLabel+"に切り替えました。");
+    return;
+  }catch(firstError){}
+
+  // 一部のAndroid/Chromeではフルスクリーン中のみorientation.lockが許可される
+  try{
+    if(!document.fullscreenElement && document.documentElement.requestFullscreen){
+      await document.documentElement.requestFullscreen();
+    }
+    await screen.orientation.lock(target);
+    localStorage.setItem("dualtube_orientation",target);
+    updateOrientationButton();
+    setStatus(targetLabel+"に切り替えました。");
+  }catch(secondError){
+    setStatus("端末側が画面方向の強制切替を許可しませんでした。自動回転をONにして端末を回すと、DualTubeは自動で上下↔左右表示に切り替わります。",true);
+  }
+}
+
 function restore(){
   const vt=localStorage.getItem("dualtube_volume_top");
   const vb=localStorage.getItem("dualtube_volume_bottom");
@@ -379,7 +424,7 @@ function restore(){
     els.watchModeBtn.textContent="✎ 編集モード";
   }
 
-  updatePlaceholders();updateVolLabels();
+  updatePlaceholders();updateVolLabels();updateOrientationButton();
   document.querySelectorAll(".audio-btn").forEach(x=>x.classList.toggle("active",x.dataset.mode===audioMode));
 }
 
@@ -407,6 +452,13 @@ els.volumeTop.addEventListener("input",()=>{updateVolLabels();saveVolumes();appl
 els.volumeBottom.addEventListener("input",()=>{updateVolLabels();saveVolumes();applyAudioMode()});
 $("swapBtn").addEventListener("click",swapPlayers);
 els.watchModeBtn.addEventListener("click",toggleWatch);
+els.orientationBtn.addEventListener("click",toggleOrientation);
+
+if(screen.orientation && typeof screen.orientation.addEventListener==="function"){
+  screen.orientation.addEventListener("change",updateOrientationButton);
+}
+window.addEventListener("orientationchange",updateOrientationButton);
+window.addEventListener("resize",updateOrientationButton);
 
 $("shareToTop").addEventListener("click",()=>putSharedVideo("top"));
 $("shareToBottom").addEventListener("click",()=>putSharedVideo("bottom"));
