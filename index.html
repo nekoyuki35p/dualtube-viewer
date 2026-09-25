@@ -1,357 +1,170 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111111" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <title>DualTube Viewer</title>
   <style>
-    :root {
-      --bg: #0f0f0f;
-      --panel: #181818;
-      --panel2: #222;
-      --text: #f5f5f5;
-      --muted: #a9a9a9;
-      --accent: #ff4f8b;
-      --border: #333;
-      --danger: #ff7070;
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100%;
-    }
-
-    body {
-      padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
-    }
-
-    .app {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      font-size: 20px;
-      margin: 8px 4px 12px;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 8px;
-      margin: 8px 0;
-    }
-
-    input {
-      min-width: 0;
-      flex: 1;
-      padding: 11px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      font-size: 15px;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: var(--accent);
-    }
-
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 14px;
-      background: var(--panel2);
-      color: var(--text);
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    .load-btn {
-      background: var(--accent);
-      color: #fff;
-      white-space: nowrap;
-    }
-
-    .player-wrap {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      margin: 6px 0 10px;
-      border: 1px solid #202020;
-    }
-
-    .player-wrap iframe,
-    .player-wrap > div {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .audio-controls {
-      position: sticky;
-      bottom: 8px;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      padding: 10px;
-      margin-top: 10px;
-      background: rgba(24, 24, 24, 0.95);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      backdrop-filter: blur(8px);
-    }
-
-    .audio-btn.active {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .status {
-      min-height: 20px;
-      margin: 4px 2px 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .status.error {
-      color: var(--danger);
-    }
-
-    .note {
-      margin: 10px 4px 18px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.55;
-    }
-
-    @media (orientation: landscape) {
-      .players {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-
-      .section {
-        min-width: 0;
-      }
-    }
+    :root{--bg:#0f0f0f;--panel:#181818;--panel2:#242424;--text:#f5f5f5;--muted:#aaa;--accent:#ff4f8b;--border:#333;--danger:#ff7070}
+    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100%}
+    body{padding:max(env(safe-area-inset-top),6px) 10px max(env(safe-area-inset-bottom),8px)}
+    .app{max-width:920px;margin:0 auto}.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 2px 10px}
+    h1{font-size:20px;margin:0;white-space:nowrap}.toolbar{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+    button{border:0;border-radius:10px;padding:10px 12px;background:var(--panel2);color:var(--text);font-weight:700;font-size:14px}
+    button:active{transform:scale(.98)}.small-btn{padding:8px 10px;font-size:13px}.load-btn{background:var(--accent);color:#fff;white-space:nowrap}.install-btn{display:none;background:#fff;color:#111}
+    .players{display:flex;flex-direction:column;gap:4px}.input-row{display:flex;gap:8px;margin:8px 0}
+    input[type=url]{min-width:0;flex:1;padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:15px;outline:none}
+    input[type=url]:focus{border-color:var(--accent)}
+    .player-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;margin:5px 0 8px;border:1px solid #202020}
+    .player-wrap iframe,.player-wrap>div{width:100%!important;height:100%!important}
+    .status{min-height:20px;margin:4px 2px 8px;color:var(--muted);font-size:13px}.status.error{color:var(--danger)}
+    .sound-panel{position:sticky;bottom:max(env(safe-area-inset-bottom),8px);z-index:10;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:14px;background:rgba(24,24,24,.96);backdrop-filter:blur(10px)}
+    .volume-row{display:grid;grid-template-columns:52px 1fr 46px;align-items:center;gap:8px;margin-bottom:9px}
+    .volume-row label{font-weight:700;font-size:14px}.volume-value{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+    input[type=range]{width:100%;accent-color:var(--accent)}.audio-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.audio-btn.active{background:var(--accent);color:#fff}
+    .note{margin:10px 4px 18px;color:var(--muted);font-size:12px;line-height:1.55}
+    body.watch-mode .input-row,body.watch-mode .status,body.watch-mode .note{display:none}
+    body.watch-mode h1{font-size:16px;opacity:.85}body.watch-mode .topbar{margin-bottom:4px}
+    @media (orientation:landscape){.players{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sound-panel{position:static}}
+    @media (max-width:520px){h1{font-size:18px}.toolbar button{font-size:12px;padding:8px 9px}}
   </style>
 </head>
 <body>
-  <main class="app">
+<main class="app">
+  <div class="topbar">
     <h1>DualTube Viewer</h1>
-
-    <div class="players">
-      <section class="section">
-        <div class="input-row">
-          <input id="urlTop" type="url" inputmode="url"
-                 placeholder="上のYouTube URL" autocomplete="off" />
-          <button class="load-btn" id="loadTop">読込</button>
-        </div>
-        <div class="player-wrap">
-          <div id="playerTop"></div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="input-row">
-          <input id="urlBottom" type="url" inputmode="url"
-                 placeholder="下のYouTube URL" autocomplete="off" />
-          <button class="load-btn" id="loadBottom">読込</button>
-        </div>
-        <div class="player-wrap">
-          <div id="playerBottom"></div>
-        </div>
-      </section>
+    <div class="toolbar">
+      <button id="watchModeBtn" class="small-btn">👁 視聴モード</button>
+      <button id="swapBtn" class="small-btn">⇅ 上下入替</button>
+      <button id="installBtn" class="small-btn install-btn">＋ ホームに追加</button>
     </div>
+  </div>
 
-    <div id="status" class="status">URLを2本入れて「読込」。その後、それぞれの ▶ を押して再生してください。</div>
+  <div id="players" class="players">
+    <section id="sectionA">
+      <div class="input-row">
+        <input id="urlA" type="url" inputmode="url" placeholder="上のYouTube URL" autocomplete="off">
+        <button class="load-btn" id="loadA">読込</button>
+      </div>
+      <div class="player-wrap"><div id="playerA"></div></div>
+    </section>
+    <section id="sectionB">
+      <div class="input-row">
+        <input id="urlB" type="url" inputmode="url" placeholder="下のYouTube URL" autocomplete="off">
+        <button class="load-btn" id="loadB">読込</button>
+      </div>
+      <div class="player-wrap"><div id="playerB"></div></div>
+    </section>
+  </div>
 
+  <div id="status" class="status">URLを2本入れて「読込」。その後、それぞれの ▶ を押して再生してください。</div>
+
+  <div class="sound-panel">
+    <div class="volume-row">
+      <label for="volumeTop">🔊 上</label>
+      <input id="volumeTop" type="range" min="0" max="100" step="1" value="80">
+      <span id="volumeTopValue" class="volume-value">80%</span>
+    </div>
+    <div class="volume-row">
+      <label for="volumeBottom">🔊 下</label>
+      <input id="volumeBottom" type="range" min="0" max="100" step="1" value="30">
+      <span id="volumeBottomValue" class="volume-value">30%</span>
+    </div>
     <div class="audio-controls">
-      <button class="audio-btn" data-mode="top">🔊 上</button>
-      <button class="audio-btn" data-mode="bottom">🔊 下</button>
-      <button class="audio-btn" data-mode="both">🔊 両方</button>
+      <button class="audio-btn" data-mode="top">🔊 上だけ</button>
+      <button class="audio-btn" data-mode="bottom">🔊 下だけ</button>
+      <button class="audio-btn active" data-mode="both">🔊 両方</button>
     </div>
+  </div>
 
-    <div class="note">
-      初期状態は上下ともミュートです。音声ボタンは再生を止めずにミュート状態だけ切り替えます。
-      YouTube側やブラウザ側の制約により、端末・動画によって同時再生の挙動が異なる場合があります。
-    </div>
-  </main>
+  <div class="note">音量・URL・上下入替・視聴モードはこの端末に保存されます。上下入替後も音量操作は見た目の上/下に追従します。</div>
+</main>
 
-  <script>
-    let apiReady = false;
-    let topPlayer = null;
-    let bottomPlayer = null;
+<script>
+let apiReady=false, playerA=null, playerB=null, swapped=false, audioMode="both", deferredInstallPrompt=null;
+const $=id=>document.getElementById(id);
+const els={players:$("players"),sectionA:$("sectionA"),sectionB:$("sectionB"),urlA:$("urlA"),urlB:$("urlB"),status:$("status"),volumeTop:$("volumeTop"),volumeBottom:$("volumeBottom"),volumeTopValue:$("volumeTopValue"),volumeBottomValue:$("volumeBottomValue"),watchModeBtn:$("watchModeBtn"),installBtn:$("installBtn")};
 
-    function setStatus(message, isError = false) {
-      const el = document.getElementById("status");
-      el.textContent = message;
-      el.classList.toggle("error", isError);
-    }
+function setStatus(msg,err=false){els.status.textContent=msg;els.status.classList.toggle("error",err)}
+function extractVideoId(value){
+  if(!value)return null; const raw=value.trim();
+  if(/^[A-Za-z0-9_-]{11}$/.test(raw))return raw;
+  let url; try{url=new URL(raw)}catch{return null}
+  const host=url.hostname.replace(/^www\./,"");
+  if(host==="youtu.be"){const id=url.pathname.split("/").filter(Boolean)[0];return /^[A-Za-z0-9_-]{11}$/.test(id||"")?id:null}
+  if(host.endsWith("youtube.com")||host.endsWith("youtube-nocookie.com")){
+    const v=url.searchParams.get("v"); if(v&&/^[A-Za-z0-9_-]{11}$/.test(v))return v;
+    const p=url.pathname.split("/").filter(Boolean);
+    if(p.length>=2&&["live","shorts","embed"].includes(p[0])) return /^[A-Za-z0-9_-]{11}$/.test(p[1]||"")?p[1]:null;
+  }
+  return null;
+}
+function makePlayer(id){return new YT.Player(id,{width:"100%",height:"100%",videoId:"",playerVars:{autoplay:0,controls:1,playsinline:1,rel:0,fs:1},events:{onReady:e=>{e.target.mute();applyAudioMode()},onError:e=>setStatus("YouTubeプレイヤーでエラーが発生しました。コード: "+e.data,true)}})}
+function getTopPlayer(){return swapped?playerB:playerA}
+function getBottomPlayer(){return swapped?playerA:playerB}
+function loadVideo(which){
+  if(!apiReady){setStatus("YouTubeプレイヤーを準備中です。",true);return}
+  const input=which==="A"?els.urlA:els.urlB, player=which==="A"?playerA:playerB, id=extractVideoId(input.value);
+  if(!id){setStatus("YouTubeのURLを確認してください。",true);return}
+  try{player.cueVideoById(id);player.mute();localStorage.setItem("dualtube_url_"+which,input.value.trim());applyAudioMode();setStatus("動画を読み込みました。▶ を押して再生してください。")}catch{setStatus("動画の読み込みに失敗しました。",true)}
+}
+function applyOne(player,enabled,vol){
+  if(!player||typeof player.setVolume!=="function")return;
+  try{player.setVolume(Number(vol)); if(enabled&&Number(vol)>0)player.unMute(); else player.mute()}catch{}
+}
+function applyAudioMode(){
+  if(!playerA||!playerB)return;
+  const top=getTopPlayer(),bottom=getBottomPlayer(),tv=Number(els.volumeTop.value),bv=Number(els.volumeBottom.value);
+  if(audioMode==="top"){applyOne(top,true,tv);applyOne(bottom,false,bv)}
+  else if(audioMode==="bottom"){applyOne(top,false,tv);applyOne(bottom,true,bv)}
+  else{applyOne(top,true,tv);applyOne(bottom,true,bv)}
+  document.querySelectorAll(".audio-btn").forEach(b=>b.classList.toggle("active",b.dataset.mode===audioMode));
+}
+function saveVolumes(){localStorage.setItem("dualtube_volume_top",els.volumeTop.value);localStorage.setItem("dualtube_volume_bottom",els.volumeBottom.value);localStorage.setItem("dualtube_audio_mode",audioMode)}
+function updateVolLabels(){els.volumeTopValue.textContent=els.volumeTop.value+"%";els.volumeBottomValue.textContent=els.volumeBottom.value+"%"}
+function updatePlaceholders(){
+  const first=els.players.firstElementChild.querySelector('input[type="url"]');
+  const second=els.players.lastElementChild.querySelector('input[type="url"]');
+  first.placeholder="上のYouTube URL"; second.placeholder="下のYouTube URL";
+}
+function swapPlayers(){
+  swapped=!swapped;
+  if(swapped)els.players.insertBefore(els.sectionB,els.sectionA); else els.players.insertBefore(els.sectionA,els.sectionB);
+  localStorage.setItem("dualtube_swapped",swapped?"1":"0"); updatePlaceholders(); applyAudioMode(); setStatus("上下を入れ替えました。");
+}
+function toggleWatch(){
+  const on=document.body.classList.toggle("watch-mode");
+  els.watchModeBtn.textContent=on?"✎ 編集モード":"👁 視聴モード";
+  localStorage.setItem("dualtube_watch_mode",on?"1":"0");
+}
+function restore(){
+  const vt=localStorage.getItem("dualtube_volume_top"),vb=localStorage.getItem("dualtube_volume_bottom"),m=localStorage.getItem("dualtube_audio_mode");
+  if(vt!==null)els.volumeTop.value=vt;if(vb!==null)els.volumeBottom.value=vb;if(["top","bottom","both"].includes(m))audioMode=m;
+  const a=localStorage.getItem("dualtube_url_A"),b=localStorage.getItem("dualtube_url_B");if(a)els.urlA.value=a;if(b)els.urlB.value=b;
+  if(localStorage.getItem("dualtube_swapped")==="1"){swapped=true;els.players.insertBefore(els.sectionB,els.sectionA)}
+  if(localStorage.getItem("dualtube_watch_mode")==="1"){document.body.classList.add("watch-mode");els.watchModeBtn.textContent="✎ 編集モード"}
+  updatePlaceholders();updateVolLabels();document.querySelectorAll(".audio-btn").forEach(x=>x.classList.toggle("active",x.dataset.mode===audioMode));
+}
+window.onYouTubeIframeAPIReady=()=>{apiReady=true;playerA=makePlayer("playerA");playerB=makePlayer("playerB");setStatus("準備完了。URLを読み込んで、それぞれ手動で ▶ を押してください。")};
+$("loadA").addEventListener("click",()=>loadVideo("A"));$("loadB").addEventListener("click",()=>loadVideo("B"));
+els.urlA.addEventListener("keydown",e=>{if(e.key==="Enter")loadVideo("A")});els.urlB.addEventListener("keydown",e=>{if(e.key==="Enter")loadVideo("B")});
+document.querySelectorAll(".audio-btn").forEach(btn=>btn.addEventListener("click",()=>{audioMode=btn.dataset.mode;saveVolumes();applyAudioMode();setStatus("音声: "+(audioMode==="top"?"上だけ":audioMode==="bottom"?"下だけ":"両方"))}));
+els.volumeTop.addEventListener("input",()=>{updateVolLabels();saveVolumes();applyAudioMode()});els.volumeBottom.addEventListener("input",()=>{updateVolLabels();saveVolumes();applyAudioMode()});
+$("swapBtn").addEventListener("click",swapPlayers);els.watchModeBtn.addEventListener("click",toggleWatch);
 
-    function extractVideoId(value) {
-      if (!value) return null;
-      const raw = value.trim();
-
-      if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
-
-      let url;
-      try {
-        url = new URL(raw);
-      } catch {
-        return null;
-      }
-
-      const host = url.hostname.replace(/^www\./, "");
-
-      if (host === "youtu.be") {
-        const id = url.pathname.split("/").filter(Boolean)[0];
-        return /^[A-Za-z0-9_-]{11}$/.test(id || "") ? id : null;
-      }
-
-      if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
-        const v = url.searchParams.get("v");
-        if (v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v;
-
-        const parts = url.pathname.split("/").filter(Boolean);
-        if (parts.length >= 2 && ["live", "shorts", "embed"].includes(parts[0])) {
-          const id = parts[1];
-          return /^[A-Za-z0-9_-]{11}$/.test(id || "") ? id : null;
-        }
-      }
-
-      return null;
-    }
-
-    function makePlayer(elementId, readyCallback) {
-      return new YT.Player(elementId, {
-        width: "100%",
-        height: "100%",
-        videoId: "",
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          playsinline: 1,
-          rel: 0,
-          fs: 1
-        },
-        events: {
-          onReady: (event) => {
-            event.target.mute();
-            readyCallback?.();
-          },
-          onError: (event) => {
-            setStatus("YouTubeプレイヤーでエラーが発生しました。コード: " + event.data, true);
-          }
-        }
-      });
-    }
-
-    window.onYouTubeIframeAPIReady = function() {
-      apiReady = true;
-
-      topPlayer = makePlayer("playerTop");
-      bottomPlayer = makePlayer("playerBottom");
-
-      setStatus("準備完了。URLを読み込んで、それぞれ手動で ▶ を押してください。");
-    };
-
-    function loadVideo(which) {
-      if (!apiReady) {
-        setStatus("YouTubeプレイヤーを準備中です。少ししてからもう一度押してください。", true);
-        return;
-      }
-
-      const isTop = which === "top";
-      const input = document.getElementById(isTop ? "urlTop" : "urlBottom");
-      const player = isTop ? topPlayer : bottomPlayer;
-      const id = extractVideoId(input.value);
-
-      if (!id) {
-        setStatus("YouTubeのURLを確認してください。", true);
-        return;
-      }
-
-      try {
-        player.cueVideoById(id);
-        player.mute();
-        setStatus((isTop ? "上" : "下") + "の動画を読み込みました。▶ を押して再生してください。");
-      } catch (e) {
-        setStatus("動画の読み込みに失敗しました。", true);
-      }
-    }
-
-    function setAudioMode(mode) {
-      if (!topPlayer || !bottomPlayer) {
-        setStatus("プレイヤーを準備中です。", true);
-        return;
-      }
-
-      try {
-        if (mode === "top") {
-          topPlayer.unMute();
-          topPlayer.setVolume(100);
-          bottomPlayer.mute();
-        } else if (mode === "bottom") {
-          topPlayer.mute();
-          bottomPlayer.unMute();
-          bottomPlayer.setVolume(100);
-        } else {
-          topPlayer.unMute();
-          bottomPlayer.unMute();
-          topPlayer.setVolume(100);
-          bottomPlayer.setVolume(100);
-        }
-
-        document.querySelectorAll(".audio-btn").forEach(btn => {
-          btn.classList.toggle("active", btn.dataset.mode === mode);
-        });
-
-        const label = mode === "top" ? "上" : mode === "bottom" ? "下" : "両方";
-        setStatus("音声: " + label);
-      } catch (e) {
-        setStatus("音声切替に失敗しました。", true);
-      }
-    }
-
-    document.getElementById("loadTop").addEventListener("click", () => loadVideo("top"));
-    document.getElementById("loadBottom").addEventListener("click", () => loadVideo("bottom"));
-
-    document.querySelectorAll(".audio-btn").forEach(btn => {
-      btn.addEventListener("click", () => setAudioMode(btn.dataset.mode));
-    });
-
-    document.getElementById("urlTop").addEventListener("keydown", e => {
-      if (e.key === "Enter") loadVideo("top");
-    });
-
-    document.getElementById("urlBottom").addEventListener("keydown", e => {
-      if (e.key === "Enter") loadVideo("bottom");
-    });
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        try { topPlayer?.pauseVideo(); } catch {}
-        try { bottomPlayer?.pauseVideo(); } catch {}
-      }
-    });
-  </script>
-
-  <script src="https://www.youtube.com/iframe_api"></script>
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;els.installBtn.style.display="inline-block"});
+els.installBtn.addEventListener("click",async()=>{if(!deferredInstallPrompt){setStatus("Chromeメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。");return}deferredInstallPrompt.prompt();try{await deferredInstallPrompt.userChoice}catch{}deferredInstallPrompt=null;els.installBtn.style.display="none"});
+window.addEventListener("appinstalled",()=>{setStatus("ホーム画面に追加しました。");els.installBtn.style.display="none"});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){try{playerA?.pauseVideo()}catch{}try{playerB?.pauseVideo()}catch{}}});
+if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+restore();
+</script>
+<script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
